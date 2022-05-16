@@ -30,44 +30,56 @@ class ClientHandler extends Thread
 				for (String word : cmd) {
 					cmdlane += word + " ";
 				}
+				// run command line  
 				this.callCmd(cmdlane,true,true);
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("An error accured while executing the command");
 		}});
 		command.put("ls", cmd ->{try {
+			// run command line 
 			this.callCmd("dir",false,true);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("An error accured while executing the command");
 		}});
 		command.put("mkdir", cmd ->{try {
 			String cmdlane = "";
 			for (String word : cmd) {
 				cmdlane += word + " ";
 			}
+			// run command line 
 			this.callCmd(cmdlane,false,false);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("An error accured while executing the command");
 		}});
 		command.put("upload", cmd->{try {
 			// Receive file from user
 			if(cmd.length == 2) {
+				// Protocol to receive file 
 				this.utile.getfile(socket,this.directory);
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		}catch (IllegalArgumentException e) {
+			// add to logs of error
+			//System.out.println("an error has occurred : "+e.getMessage());
+		}
+		catch (IOException e) {
+			// add to logs of error
+			System.out.println("an error has occurred : "+e.getMessage());
+			
 		}});
 		command.put("download", cmd->{try {
 			if(cmd.length == 2) {
+				// Protocol to send file 
 				this.utile.sendfile(socket, this.directory , cmd[1]);
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			
+		} catch (IllegalArgumentException e) {
+			// add to logs of error
+			//System.out.println("an error has occurred : "+e.getMessage());
+		}
+		catch (IOException e) {
+			// add to logs of error
+			System.out.println("an error has occurred : "+e.getMessage());
 		}});
 		command.put("exit", cmd->{});
 		
@@ -87,24 +99,28 @@ class ClientHandler extends Thread
 			Process process = processBuilder.start();
 			BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream())) ;
             String line = ""; 
-            String worde = "";
+            String word = "";
             while ((line = input.readLine()) != null) { 
             
    			    if(changedirectory) {
    			    	this.directory = line;
    			    	
-   			   
             	}
-   			    worde += line + "\n";
+   			    if(!word.contains(line + "\n")) {
+   			    	word += line + "\n";
+   			    }
+   			   
+   			    
             }
 	        if(returnvalue) {
 	        	DataOutput out = new DataOutputStream(socket.getOutputStream());
-	    		out.writeUTF(worde);
+	        	out.writeUTF(word);
+	    		
             }
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("an error has occurred : "+e.getMessage());
 		}
 		
 
@@ -128,14 +144,9 @@ class ClientHandler extends Thread
 				String[] key = utile.getkey(userInput);
 				command.get(key[0]).accept(key);
 			}while( userInput.compareTo("exit") != 0);
-			
-			
 		
-			
-			
-			
 		}catch (IOException e){
-
+			System.out.println("an error has occurred : "+e.getMessage());
 		}finally {
 			try{
 				socket.close();

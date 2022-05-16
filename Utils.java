@@ -71,46 +71,60 @@ public class Utils {
 	
 	public void sendfile(Socket socket,String path,String fileName) throws IOException {
 		DataOutput out = new DataOutputStream(socket.getOutputStream());
-		System.out.println(fileName);
+		
 		// Open file
 		File file = new File(path+"\\"+fileName);
+		Boolean fileExist = file.isFile();
+		out.writeBoolean(fileExist);
 		
-		// size of file
-		int filelength = (int) file.length();
-	
-		// read file as bytes
-		BufferedInputStream buffer = new BufferedInputStream(new FileInputStream(file));
+		if(fileExist) {
+			// size of file
+			int filelength = (int) file.length();
 		
-		// create list of byte to put file in 
-		byte[] bufferList = new byte[filelength] ;
-	
-		// fill Buffer list with the file bytes
-		int bufferlenght = buffer.read(bufferList, 0, filelength);
-		out.writeUTF(fileName);
-		//send length of list
-		out.writeInt(bufferlenght);
-		//send byte 
-		out.write(bufferList, 0, bufferlenght);
-	
+			// read file as bytes
+			BufferedInputStream buffer = new BufferedInputStream(new FileInputStream(file));
+			
+			// create list of byte to put file in 
+			byte[] bufferList = new byte[filelength] ;
 		
-		buffer.close();
+			// fill Buffer list with the file bytes
+			int bufferlenght = buffer.read(bufferList, 0, filelength);
+			out.writeUTF(fileName);
+			//send length of list
+			out.writeInt(bufferlenght);
+			//send byte 
+			out.write(bufferList, 0, bufferlenght);
+		
+			
+			buffer.close();
+		}else {
+		
+			throw new IllegalArgumentException("file giving does not exist");
+		}
+	
 		
 
 	}
 	public void getfile(Socket socket,String path) throws IOException {
 		DataInputStream in = new DataInputStream(socket.getInputStream());
-		String fileName = in.readUTF();
 		
-		int sizefile = in.readInt();
-		System.out.println(fileName);
-		byte[] bufferList = new byte[sizefile] ;
-		in.read(bufferList, 0, sizefile);
+		if(in.readBoolean()) {
 		
-		OutputStream os = new FileOutputStream(path+"\\"+fileName);
+			String fileName = in.readUTF();
+			
+			int sizefile = in.readInt();
+			byte[] bufferList = new byte[sizefile] ;
+			in.read(bufferList, 0, sizefile);
+			
+			OutputStream os = new FileOutputStream(path+"\\"+fileName);
 
-        os.write(bufferList);
-       
-        os.close();
+	        os.write(bufferList);
+	       
+	        os.close();
+		}else {
+			throw new IllegalArgumentException("file giving does not exist");
+		}
+		
 	
 	
 	}

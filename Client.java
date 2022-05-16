@@ -22,9 +22,9 @@ public class Client {
 			String directory = in.readUTF();
 			System.out.println(directory);
 			
+			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("An error accured while executing the command");
 		}
 	
 		});
@@ -37,8 +37,7 @@ public class Client {
 			System.out.println(lsOutput);
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("An error accured while executing the command");
 		}
 	
 		});
@@ -53,7 +52,11 @@ public class Client {
 			}
 			
 			
-		} catch (IOException e) {
+		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
+			
+		}
+		catch (IOException e) {
 			System.out.println("An error accured while upload");
 		}});
 		// download protocol 
@@ -63,6 +66,9 @@ public class Client {
 			if(cmd.length == 2) {
 				utile.getfile(socket,System.getProperty("user.dir"));
 			}
+		}catch (IllegalArgumentException e){
+			System.out.println(e.getMessage());
+			
 		} catch (IOException e) {
 			System.out.println("An error accured while download");
 		}
@@ -76,10 +82,9 @@ public class Client {
 			System.out.println("client is running");
 			initilzate();
 			//IP address
-
-			String serverAddress = utils.getIp();
+			String serverAddress = utile.getIp();
 			// Port number
-			int port = utils.getPort();
+			int port = utile.getPort();
 			//Create a connection to Port at the IP address
 			socket = new Socket(serverAddress,port);
 			//Assign a reader 

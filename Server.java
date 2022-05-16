@@ -4,7 +4,7 @@ import java.net.ServerSocket;
 public class Server {
     private static ServerSocket listener;
     public static void main(String[] args) throws Exception{
-    	
+    	//"192.168.120.1"
     	try {
     		
 	    	//Number of client connected
