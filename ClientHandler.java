@@ -19,7 +19,7 @@ class ClientHandler extends Thread
 	private String directory;
 	private Utils utile;
 
-	private static HashMap<String ,Consumer<String[]>> command;
+	private HashMap<String ,Consumer<String[]>> command;
 	public ClientHandler(Socket socket,Utils utile){
 		this.socket = socket;
 		this.directory = System.getProperty("user.dir");
