@@ -10,12 +10,14 @@ import java.util.function.Consumer;
 public class Client {
 
   private static Socket socket;
+  
   private static HashMap<String, Consumer<String[]>> command;
   private static Utils utile;
-
+ 
   public static void initilzate() {
     utile = new Utils();
     command = new HashMap<String, Consumer<String[]>>();
+    
     command.put(
       "cd",
       cmd -> {
@@ -31,7 +33,9 @@ public class Client {
           System.out.println("An error accured while executing the command");
         }
       }
+
     );
+    
     command.put(
       "ls",
       cmd -> {
@@ -46,7 +50,17 @@ public class Client {
         }
       }
     );
-    command.put("mkdir", cmd -> {});
+    
+    command.put("mkdir", cmd -> {
+    	try {
+			DataInputStream in = new DataInputStream(socket.getInputStream());
+			System.out.println(in.readUTF());
+		} catch (IOException e) {
+			// Auto-generated catch block
+			e.printStackTrace();
+		}
+
+    });
     command.put(
       "upload",
       cmd -> {

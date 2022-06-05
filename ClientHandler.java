@@ -19,48 +19,95 @@ class ClientHandler extends Thread {
 
   private String directory;
   private Utils utile;
-
+  private DataOutput dataOut;
   private HashMap<String, Consumer<String[]>> command;
 
-  public ClientHandler(Socket socket, Utils utile) {
+  public ClientHandler(Socket socket, Utils utile) throws IOException {
     this.socket = socket;
+    this.dataOut = new DataOutputStream(socket.getOutputStream());
     this.directory = System.getProperty("user.dir");
     this.utile = utile;
+    
     command = new HashMap<String, Consumer<String[]>>();
+    
     command.put(
       "cd",
       cmd -> {
         // run command line
         try {
-          this.cdCmd(cmd);
+            
+            if (cmd.length == 2) {
+            	System.out.println("start cd ");
+              File newdir = new File(this.directory + "//" + cmd[1]);
+              Boolean dirExsiste = newdir.exists() && cmd[1] != ".";
+              dataOut.writeBoolean(dirExsiste);
+              if (dirExsiste) {
+                String newDirectery = newdir.toString();
+                if (cmd[1].compareTo("..") == 0) {
+                  newDirectery = Paths.get(this.directory).getParent().toString();
+                }
+                this.directory = newDirectery;
+                dataOut.writeUTF(newDirectery);
+              }
+            } else {
+            	dataOut.writeBoolean(false);
+            }
+        
         } catch (IOException e) {
-          // TODO Auto-generated catch block
+          // Auto-generated catch block
           e.printStackTrace();
         }
       }
     );
+    
     command.put(
       "ls",
       cmd -> {
         try {
+        	 System.out.println("entre ls");
+        
           // run command line
-          this.lsCmd();
+            String Filelist = Stream
+              .of(new File(this.directory).listFiles())
+              .map(File::getName)
+              .collect(Collectors.joining("\n"));
+      
+        	dataOut.writeUTF(Filelist);
+        	System.out.println("fini ls");
         } catch (IOException e) {
-          System.out.println("An error accured while executing the command");
+            // Auto-generated catch block
+            e.printStackTrace();
         }
+ 
       }
     );
+    
     command.put(
       "mkdir",
       cmd -> {
         try {
           // run command line
-          this.mkdirCmd(cmd);
+        	String message = "no argument was given";
+            if (cmd.length == 2) {
+                File newdir = new File(this.directory + "//" + cmd[1]);
+                Boolean fileDontExist = !newdir.exists();
+      
+                if (fileDontExist) {
+                  Files.createDirectory(newdir.toPath());
+           
+                }
+                
+                message = (fileDontExist) ? "This directory " + cmd[1] + "has been created" : "this file already exist" ;
+                
+              }
+            this.dataOut.writeUTF(message);
         } catch (IOException e) {
-          System.out.println("An error accured while executing the command");
+            // Auto-generated catch block
+            e.printStackTrace();
         }
       }
     );
+    
     command.put(
       "upload",
       cmd -> {
@@ -70,15 +117,13 @@ class ClientHandler extends Thread {
             // Protocol to receive file
             this.utile.getfile(socket, this.directory);
           }
-        } catch (IllegalArgumentException e) {
-          // add to logs of error
-          //System.out.println("an error has occurred : "+e.getMessage());
         } catch (IOException e) {
-          // add to logs of error
-          System.out.println("an error has occurred : " + e.getMessage());
+        	// add to logs of error
+        	e.printStackTrace();
         }
       }
     );
+    
     command.put(
       "download",
       cmd -> {
@@ -91,54 +136,18 @@ class ClientHandler extends Thread {
           // add to logs of error
           e.getMessage();
         } catch (IOException e) {
-          // add to logs of error
-          System.out.println("an error has occurred : " + e.getMessage());
+	        // Auto-generated catch block
+	        e.printStackTrace();
         }
       }
     );
-    command.put("exit", cmd -> {});
+    
+    command.put("exit", cmd -> { } );
+    
   }
 
-  public void lsCmd() throws IOException {
-    DataOutput out = new DataOutputStream(socket.getOutputStream());
 
-    String Filelist = Stream
-      .of(new File(this.directory).listFiles())
-      .map(File::getName)
-      .collect(Collectors.joining("\n"));
-    out.writeUTF(Filelist);
-  }
 
-  public void cdCmd(String[] dir) throws IOException {
-    DataOutput out = new DataOutputStream(socket.getOutputStream());
-    if (dir.length == 2) {
-      File newdir = new File(this.directory + "//" + dir[1]);
-      Boolean dirExsiste = newdir.exists() && dir[1] != ".";
-      out.writeBoolean(dirExsiste);
-      if (dirExsiste) {
-        String newDirectery = newdir.toString();
-        if (dir[1].compareTo("..") == 0) {
-          newDirectery = Paths.get(this.directory).getParent().toString();
-        }
-        this.directory = newDirectery;
-        out.writeUTF(newDirectery);
-      } else {
-        out.writeBoolean(false);
-      }
-    } else {
-      out.writeBoolean(false);
-    }
-  }
-
-  public void mkdirCmd(String[] dirName) throws IOException {
-    if (dirName.length == 2) {
-      File newdir = new File(this.directory + "//" + dirName[1]);
-      Boolean fileDontExsiste = !newdir.exists();
-      if (fileDontExsiste) {
-        Files.createDirectory(newdir.toPath());
-      }
-    }
-  }
 
   public void logs(String input) {
     LocalDateTime myDateObj = LocalDateTime.now();
@@ -160,20 +169,32 @@ class ClientHandler extends Thread {
 
   public void run() {
     try {
+    	
       String userInput = "";
+      
       do {
+    	  
         DataInputStream in = new DataInputStream(socket.getInputStream());
         userInput = in.readUTF();
         logs(userInput);
         String[] key = utile.getkey(userInput);
         command.get(key[0]).accept(key);
       } while (userInput.compareTo("exit") != 0);
+      
     } catch (IOException e) {
-      System.out.println("an error has occurred : " + e.getMessage());
+    	// Auto-generated catch block
+    	e.printStackTrace();
+    	
     } finally {
       try {
-        socket.close();
-      } catch (IOException e) {}
+    	  socket.close();
+      } catch (IOException e) {
+    	// Auto-generated catch block
+    	e.printStackTrace();
+      }
+      
     }
+    
   }
+  
 }
