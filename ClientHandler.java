@@ -37,7 +37,7 @@ class ClientHandler extends Thread {
         try {
             
             if (cmd.length == 2) {
-            	System.out.println("start cd ");
+            
               File newdir = new File(this.directory + "//" + cmd[1]);
               Boolean dirExsiste = newdir.exists() && cmd[1] != ".";
               dataOut.writeBoolean(dirExsiste);
@@ -64,7 +64,8 @@ class ClientHandler extends Thread {
       "ls",
       cmd -> {
         try {
-        	 System.out.println("entre ls");
+        	
+
         
           // run command line
             String Filelist = Stream
@@ -73,7 +74,7 @@ class ClientHandler extends Thread {
               .collect(Collectors.joining("\n"));
       
         	dataOut.writeUTF(Filelist);
-        	System.out.println("fini ls");
+        	
         } catch (IOException e) {
             // Auto-generated catch block
             e.printStackTrace();
@@ -97,7 +98,7 @@ class ClientHandler extends Thread {
            
                 }
                 
-                message = (fileDontExist) ? "This directory " + cmd[1] + "has been created" : "this file already exist" ;
+                message = (fileDontExist) ? "This directory " + cmd[1] + " has been created" : "this file already exist" ;
                 
               }
             this.dataOut.writeUTF(message);
