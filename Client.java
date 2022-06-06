@@ -12,25 +12,27 @@ public class Client {
   private static Socket socket;
   
   private static HashMap<String, Consumer<String[]>> command;
-  private static Utils utile;
+  private static Utils util;
  
   public static void initilzate() {
-    utile = new Utils();
+    util = new Utils();
     command = new HashMap<String, Consumer<String[]>>();
     
     command.put(
       "cd",
       cmd -> {
         try {
-          // create stream to read incoming data
+          // Create stream to read incoming data
           DataInputStream in = new DataInputStream(socket.getInputStream());
-          // read data
+          // Read data
           if (in.readBoolean()) {
             String directory = in.readUTF();
-            System.out.println(directory);
+            System.out.println("The server is at: " + directory);
+          } else {
+        	  System.out.println("This directory doesn't exist");
           }
         } catch (IOException e) {
-          System.out.println("An error accured while executing the command");
+          System.out.println("An error occured while executing this command!");
         }
       }
 
@@ -40,13 +42,13 @@ public class Client {
       "ls",
       cmd -> {
         try {
-          // create stream to read incoming data
+          // Create stream to read incoming data
           DataInputStream in = new DataInputStream(socket.getInputStream());
-          // read data
+          // Read data
           String lsOutput = in.readUTF();
           System.out.println(lsOutput);
         } catch (IOException e) {
-          System.out.println("An error accured while executing the command");
+          System.out.println("An error occured while executing this command");
         }
       }
     );
@@ -67,28 +69,34 @@ public class Client {
         try {
           if (cmd.length == 2) {
             //Send file to User
-            utile.sendfile(socket, System.getProperty("user.dir"), cmd[1]);
+            util.sendfile(socket, System.getProperty("user.dir"), cmd[1]);
+            System.out.println("The file " + cmd[1] + " has been uploaded successfully!");
+          } else {
+        	  System.out.println("A file name is required!");
           }
         } catch (IllegalArgumentException e) {
           System.out.println(e.getMessage());
         } catch (IOException e) {
-          System.out.println("An error accured while upload");
+          System.out.println("An error occured while uploading");
         }
       }
     );
-    // download protocol
+    // Download protocol
     command.put(
       "download",
       cmd -> {
         try {
           // Receive file from user
           if (cmd.length == 2) {
-            utile.getfile(socket, System.getProperty("user.dir"));
+            util.getfile(socket, System.getProperty("user.dir"));
+            System.out.println("The file " + cmd[1] + " has been downloaded successfully!");
+          } else {
+        	  System.out.println("A file name is required!");
           }
         } catch (IllegalArgumentException e) {
           System.out.println(e.getMessage());
         } catch (IOException e) {
-          System.out.println("An error accured while download");
+          System.out.println("An error occured while downloading");
         }
       }
     );
@@ -96,35 +104,33 @@ public class Client {
     command.put(
       "exit",
       cmd -> {
-        System.out.println("End of session");
+        System.out.println("End of session, you have been disconnected!");
       }
     );
   }
 
   public static void main(String[] args) throws Exception {
     try {
-      System.out.println("client is running");
+      System.out.println("Client is running");
       initilzate();
       //IP address
-      String serverAddress = "0.0.0.0";
-      //utile.getIp();
+      String serverAddress = util.getIp();
       // Port number
-      int port = 5000;
-      //utile.getPort();
-      //Create a connection to Port at the IP address
+      int port = util.getPort();
+      // Create a connection to Port at the IP address
       socket = new Socket(serverAddress, port);
-      //Assign a reader
+      // Assign a reader
 
       String input = "";
       Scanner myObj;
       do {
-        System.out.print("Enter command ligne : ");
+        System.out.print("Enter command line : ");
         DataOutput out = new DataOutputStream(socket.getOutputStream());
         //Create stream to read inputs
         myObj = new Scanner(System.in);
-        // read input from the user
+        // Read input from the user
         input = myObj.nextLine();
-        String[] key = utile.getkey(input);
+        String[] key = util.getkey(input);
 
         if (command.containsKey(key[0])) {
           // Create stream to send information
@@ -133,15 +139,17 @@ public class Client {
           out.writeUTF(input);
           // Depending on key we use the require step to send or receive information from server
           command.get(key[0]).accept(key);
+        } else {
+        	System.out.println("This command doesn't exist!");
         }
-        // if input equal 0 exit
+        // If input equal 0, then exit
       } while (input.compareTo("exit") != 0);
 
       myObj.close();
       socket.close();
     } catch (Exception e) {
       e.getCause();
-      System.out.println("Error exit");
+      System.out.println("Error while exiting");
     }
   }
 }

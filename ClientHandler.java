@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -18,33 +19,34 @@ class ClientHandler extends Thread {
   private Socket socket;
 
   private String directory;
-  private Utils utile;
+  private Utils util;
   private DataOutput dataOut;
   private HashMap<String, Consumer<String[]>> command;
 
-  public ClientHandler(Socket socket, Utils utile) throws IOException {
+  public ClientHandler(Socket socket, Utils util) throws IOException {
     this.socket = socket;
     this.dataOut = new DataOutputStream(socket.getOutputStream());
     this.directory = System.getProperty("user.dir");
-    this.utile = utile;
+    this.util = util;
     
     command = new HashMap<String, Consumer<String[]>>();
     
     command.put(
       "cd",
       cmd -> {
-        // run command line
+        // Run command line
         try {
-            
             if (cmd.length == 2) {
             
               File newdir = new File(this.directory + "//" + cmd[1]);
-              Boolean dirExsiste = newdir.exists() && cmd[1] != ".";
+              Boolean dirExsiste = newdir.exists();
               dataOut.writeBoolean(dirExsiste);
               if (dirExsiste) {
                 String newDirectery = newdir.toString();
                 if (cmd[1].compareTo("..") == 0) {
                   newDirectery = Paths.get(this.directory).getParent().toString();
+                } else if(cmd[1].compareTo(".") == 0){
+                	newDirectery = this.directory;
                 }
                 this.directory = newDirectery;
                 dataOut.writeUTF(newDirectery);
@@ -64,17 +66,17 @@ class ClientHandler extends Thread {
       "ls",
       cmd -> {
         try {
-        	
-
+        	if (cmd.length == 1){
+        		// Run command line
+                String Filelist = Stream
+                  .of(new File(this.directory).listFiles())
+                  .map(File::getName)
+                  .collect(Collectors.joining("\n"));
         
-          // run command line
-            String Filelist = Stream
-              .of(new File(this.directory).listFiles())
-              .map(File::getName)
-              .collect(Collectors.joining("\n"));
-      
-        	dataOut.writeUTF(Filelist);
-        	
+            	dataOut.writeUTF(Filelist);
+        	} else{
+        		dataOut.writeUTF("Do you mean 'ls' ?");
+        	}
         } catch (IOException e) {
             // Auto-generated catch block
             e.printStackTrace();
@@ -87,8 +89,8 @@ class ClientHandler extends Thread {
       "mkdir",
       cmd -> {
         try {
-          // run command line
-        	String message = "no argument was given";
+          // Run command line
+        	String message = "No argument was given.";
             if (cmd.length == 2) {
                 File newdir = new File(this.directory + "//" + cmd[1]);
                 Boolean fileDontExist = !newdir.exists();
@@ -98,7 +100,7 @@ class ClientHandler extends Thread {
            
                 }
                 
-                message = (fileDontExist) ? "This directory " + cmd[1] + " has been created" : "this file already exist" ;
+                message = (fileDontExist) ? "This directory " + cmd[1] + " has been created" : "This file already exists" ;
                 
               }
             this.dataOut.writeUTF(message);
@@ -116,10 +118,11 @@ class ClientHandler extends Thread {
           // Receive file from user
           if (cmd.length == 2) {
             // Protocol to receive file
-            this.utile.getfile(socket, this.directory);
+            this.util.getfile(socket, this.directory);
           }
-        } catch (IOException e) {
-        	// add to logs of error
+        }catch (IllegalArgumentException e) {} 
+        catch (IOException e) {
+        	// Add to logs of error
         	e.printStackTrace();
         }
       }
@@ -131,12 +134,10 @@ class ClientHandler extends Thread {
         try {
           if (cmd.length == 2) {
             // Protocol to send file
-            this.utile.sendfile(socket, this.directory, cmd[1]);
+            this.util.sendfile(socket, this.directory, cmd[1]);
           }
-        } catch (IllegalArgumentException e) {
-          // add to logs of error
-          e.getMessage();
-        } catch (IOException e) {
+        } catch (IllegalArgumentException e) {} 
+        catch (IOException e) {
 	        // Auto-generated catch block
 	        e.printStackTrace();
         }
@@ -178,11 +179,12 @@ class ClientHandler extends Thread {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         userInput = in.readUTF();
         logs(userInput);
-        String[] key = utile.getkey(userInput);
+        String[] key = util.getkey(userInput);
         command.get(key[0]).accept(key);
       } while (userInput.compareTo("exit") != 0);
       
-    } catch (IOException e) {
+    } catch (SocketException e) {}
+    catch (IOException e) {
     	// Auto-generated catch block
     	e.printStackTrace();
     	

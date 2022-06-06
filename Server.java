@@ -8,21 +8,17 @@ public class Server {
 
   public static void main(String[] args) throws Exception {
     try {
-      //Number of client connected
-
       Utils utils = new Utils();
       //IP address
-      String serverAddress = "0.0.0.0";
-      //utils.getIp();
+      String serverAddress = utils.getIp();
       // Server Port
-      int serverPort = 5000;
-      //utils.getPort();
+      int serverPort = utils.getPort();
 
-      //Create connection between client and server
+      // Create connection between client and server
       listener = new ServerSocket();
       listener.setReuseAddress(true);
       InetAddress serverIp = InetAddress.getByName(serverAddress);
-      //assign to listener the IP address to listen to and port
+      // Assign to listener the IP address to listen to and port
       listener.bind(new InetSocketAddress(serverIp, serverPort));
       System.out.println(
         "Server is running : at " + serverAddress + " Port " + serverPort
@@ -35,7 +31,7 @@ public class Server {
         listener.close();
       }
     } catch (Exception e) {
-      System.out.println("Error exit");
+      System.out.println("Error while exiting.");
     }
   }
 }
