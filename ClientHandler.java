@@ -36,22 +36,31 @@ class ClientHandler extends Thread {
       cmd -> {
         // Run command line
         try {
+        	// Verify that the directory's name was given
             if (cmd.length == 2) {
-            
+            // Create a new file
               File newdir = new File(this.directory + "//" + cmd[1]);
+              // Verify if the directory exists
               Boolean dirExsiste = newdir.exists();
+              // Send the confirmation that the directory exists
               dataOut.writeBoolean(dirExsiste);
               if (dirExsiste) {
+            	  // New directory name
                 String newDirectery = newdir.toString();
                 if (cmd[1].compareTo("..") == 0) {
+                	// Get the parent name of the current directory
                   newDirectery = Paths.get(this.directory).getParent().toString();
                 } else if(cmd[1].compareTo(".") == 0){
+                	// Keep same path name
                 	newDirectery = this.directory;
                 }
+                // Update path name
                 this.directory = newDirectery;
+                // Send the new path name
                 dataOut.writeUTF(newDirectery);
               }
             } else {
+            	// Send boolean that there is no arguments
             	dataOut.writeBoolean(false);
             }
         
@@ -66,15 +75,17 @@ class ClientHandler extends Thread {
       "ls",
       cmd -> {
         try {
+        	// Verify that no argument was given 
         	if (cmd.length == 1){
-        		// Run command line
+        		// Create a String containing the list of all files and directories
                 String Filelist = Stream
                   .of(new File(this.directory).listFiles())
                   .map(File::getName)
                   .collect(Collectors.joining("\n"));
-        
+                // Send the String containing the list
             	dataOut.writeUTF(Filelist);
         	} else{
+        		// Help user to find the command
         		dataOut.writeUTF("Do you mean 'ls' ?");
         	}
         } catch (IOException e) {
@@ -89,20 +100,23 @@ class ClientHandler extends Thread {
       "mkdir",
       cmd -> {
         try {
-          // Run command line
         	String message = "No argument was given.";
+        	// Verify that the directory name is given
             if (cmd.length == 2) {
+            	// Check if the directory exists
                 File newdir = new File(this.directory + "//" + cmd[1]);
                 Boolean fileDontExist = !newdir.exists();
-      
+                
                 if (fileDontExist) {
+                	// Create a directory
                   Files.createDirectory(newdir.toPath());
            
                 }
-                
+                // Create the message
                 message = (fileDontExist) ? "This directory " + cmd[1] + " has been created" : "This file already exists" ;
                 
               }
+            // Send the message
             this.dataOut.writeUTF(message);
         } catch (IOException e) {
             // Auto-generated catch block
@@ -144,8 +158,7 @@ class ClientHandler extends Thread {
       }
     );
     
-    command.put("exit", cmd -> { } );
-    
+    command.put("exit", cmd -> { /* Could send the entire activity of the user (warnings) to database */ } ); 
   }
 
 

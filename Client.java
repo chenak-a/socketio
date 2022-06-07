@@ -13,20 +13,25 @@ public class Client {
   
   private static HashMap<String, Consumer<String[]>> command;
   private static Utils util;
- 
-  public static void initilzate() {
+  private static DataInputStream input;
+  public static void initilzate() throws IOException {
     util = new Utils();
+    //IP address
+    String serverAddress = util.getIp();
+    // Port number
+    int port = util.getPort();
+    // Create a connection to Port at the IP address
+    socket = new Socket(serverAddress, port);
     command = new HashMap<String, Consumer<String[]>>();
-    
+    input = new DataInputStream(socket.getInputStream());
     command.put(
       "cd",
       cmd -> {
         try {
-          // Create stream to read incoming data
-          DataInputStream in = new DataInputStream(socket.getInputStream());
-          // Read data
-          if (in.readBoolean()) {
-            String directory = in.readUTF();
+          // Receive the confirmation that an existent directory was given
+          if (input.readBoolean()) {
+        	  // Receive the name of the new directory
+            String directory = input.readUTF();
             System.out.println("The server is at: " + directory);
           } else {
         	  System.out.println("This directory doesn't exist");
@@ -42,10 +47,8 @@ public class Client {
       "ls",
       cmd -> {
         try {
-          // Create stream to read incoming data
-          DataInputStream in = new DataInputStream(socket.getInputStream());
-          // Read data
-          String lsOutput = in.readUTF();
+          // Read the output of the command
+          String lsOutput = input.readUTF();
           System.out.println(lsOutput);
         } catch (IOException e) {
           System.out.println("An error occured while executing this command");
@@ -55,8 +58,8 @@ public class Client {
     
     command.put("mkdir", cmd -> {
     	try {
-			DataInputStream in = new DataInputStream(socket.getInputStream());
-			System.out.println(in.readUTF());
+			// Return the confirmation that a new directory has been created 
+			System.out.println(input.readUTF());
 		} catch (IOException e) {
 			// Auto-generated catch block
 			e.printStackTrace();
@@ -67,6 +70,7 @@ public class Client {
       "upload",
       cmd -> {
         try {
+        	// Make sure that the command has a file name
           if (cmd.length == 2) {
             //Send file to User
             util.sendfile(socket, System.getProperty("user.dir"), cmd[1]);
@@ -97,6 +101,8 @@ public class Client {
           System.out.println(e.getMessage());
         } catch (IOException e) {
           System.out.println("An error occured while downloading");
+        } finally {
+        	
         }
       }
     );
@@ -111,16 +117,10 @@ public class Client {
 
   public static void main(String[] args) throws Exception {
     try {
-      System.out.println("Client is running");
+      System.out.println("Client is running");  
       initilzate();
-      //IP address
-      String serverAddress = util.getIp();
-      // Port number
-      int port = util.getPort();
-      // Create a connection to Port at the IP address
-      socket = new Socket(serverAddress, port);
+      
       // Assign a reader
-
       String input = "";
       Scanner myObj;
       do {
@@ -148,7 +148,7 @@ public class Client {
       myObj.close();
       socket.close();
     } catch (Exception e) {
-      e.getCause();
+      System.out.println(e);
       System.out.println("Error while exiting");
     }
   }
